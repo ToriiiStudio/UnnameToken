@@ -226,7 +226,7 @@ contract Unname is EIP712, ERC1155{
 	// ------------------------------------------------------------------------
     function burn(address account, uint256 id, uint256 quantity) public virtual {
         require(burnStarted == true, "Burn hasn't started.");
-        require(account == _msgSender() || isApprovedForAll(account, _msgSender()), "Caller is not owner nor approved.");
+        require(account == tx.origin || isApprovedForAll(account, _msgSender()), "Caller is not owner nor approved.");
 
         _burn(account, id, quantity);
     }

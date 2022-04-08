@@ -56,7 +56,7 @@ describe("Unname", function () {
 
 		// Mint normal card functions
 		// ------------------------------------------------------------------------
-		// it("mintNormal Function", async function () {
+		it("mintNormal Function", async function () {
 
 			// public
 			// ------------------------------------------------------------------------
@@ -99,7 +99,7 @@ describe("Unname", function () {
 			// signature = await owner._signTypedData(domain, types, value);
 			// // console.log(signature);
 			// await contract.connect(addr1).mintNormal(maxQuantity, maxQuantity, signature, {value: "264000000000000000"});			
-		// });
+		});
 			
 
 

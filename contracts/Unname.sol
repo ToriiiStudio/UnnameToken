@@ -15,20 +15,21 @@ contract Unname is EIP712, ERC1155{
 
 	// Variables
 	// ------------------------------------------------------------------------
-	string private _name = "U"; 
-	string private _symbol = "U"; 
+	string private _name = "U"; //
+	string private _symbol = "PFUT"; // 
 	
 	uint256 public MAX_NORMAL_TOKEN = 2200;
 	uint256 public MAX_SPECIAL_TOKEN = 22;
-	uint256 public SPECIAL_CARD_CONDICTION = 3;
-	uint256 public PRICE = 0.12 ether; 
-	uint256 public saleTimestamp = 1642410000; 
+	uint256 public SPECIAL_CARD_CONDICTION = 3; // 
+	uint256 public MAX_ADDRESS_TOKEN = 5; //
+	uint256 public PRICE = 0.2 ether; //
+	uint256 public saleTimestamp = 1642410000; //
 	uint256 public totalSupply = 0;
 	uint256 public normalSupply = 0;
 	uint256 public specialSupply = 0;
-	uint256 public claimStageLimit = 25;
+	uint256 public claimStageLimit = 30;
 	uint256 public auctionStageLimit = 2200;
-	uint256 private specialCardId = 21; 
+	uint256 public specialCardId = 21; 
 	
 	bool public hasSaleStarted = true; 
 	bool public hasClaimStarted = true; 
@@ -48,12 +49,14 @@ contract Unname is EIP712, ERC1155{
     uint256 public auctionStepNumber;
 
 	mapping (uint256 => uint256) public quantityLimit;
-	mapping (uint256 => uint256) public hasMinted;
+	mapping (uint256 => uint256) public idHasMinted;
+	mapping (address => uint256) public addressHasMinted;
+	mapping (address => uint256) public addressHasClaimed;
 
 	// Constructor
 	// ------------------------------------------------------------------------
 	constructor()
-	ERC1155("https://{id}")
+	ERC1155("https://api.unnametoken.com/Metadata/{id}")
 	EIP712("Unname", "1.0.0")
 	{
 		for (uint index = 1; index < 21; index++){
@@ -141,7 +144,7 @@ contract Unname is EIP712, ERC1155{
 	// Giveaway functions
 	// ------------------------------------------------------------------------
 	function giveawayNFT(address to, uint256 id, uint256 quantity) external onlyOwner{
-		require(quantity > 0 && hasMinted[id].add(quantity) <= quantityLimit[id], "Exceeds id quantity limit.");
+		require(quantity > 0 && idHasMinted[id].add(quantity) <= quantityLimit[id], "Exceeds id quantity limit.");
 
 		_mint(to, id, quantity, "");
 
@@ -151,15 +154,16 @@ contract Unname is EIP712, ERC1155{
 			normalSupply = normalSupply.add(quantity);
 		}
 		totalSupply = normalSupply + specialSupply;
-		hasMinted[id] = hasMinted[id].add(quantity);
+		idHasMinted[id] = idHasMinted[id].add(quantity);
 
 		emit mintEvent(to, id, quantity, totalSupply);
 	}
 
 	// Claim special card functions
 	// ------------------------------------------------------------------------
-	function claimSpecial(uint256 maxQuantity, bytes memory SIGNATURE) external payable onlySale callerIsUser{
+	function claimSpecial(uint256 maxQuantity, bytes memory SIGNATURE) external payable callerIsUser{
 		require(hasClaimStarted == true, "Claim has not started.");
+		require(block.timestamp >= saleTimestamp, "NOT_IN_CLAIM_TIME");
 		require(specialCardId <= claimStageLimit, "Exceed the special id of claim at this stage.");
 		require(verify(maxQuantity, SIGNATURE), "Not eligible for claim.");
 		
@@ -173,15 +177,17 @@ contract Unname is EIP712, ERC1155{
 		require(tokenNum >= SPECIAL_CARD_CONDICTION, "Not enough normal card.");
 		require(msg.value == PRICE, "Ether value sent is not equal the price.");
 		require(specialSupply.add(1) <= MAX_SPECIAL_TOKEN, "Exceeds MAX_SPECIAL_TOKEN.");
-		require(hasMinted[specialCardId].add(1) <= quantityLimit[specialCardId], "Exceeds id quantity limit.");
+		require(idHasMinted[specialCardId].add(1) <= quantityLimit[specialCardId], "Exceeds id quantity limit.");
+		require(addressHasClaimed[msg.sender].add(1) <= maxQuantity, "Exeeds claim quantity.");
 		
 		_mint(msg.sender, specialCardId, 1, "");
 
-		hasMinted[specialCardId] = hasMinted[specialCardId].add(1);
+		idHasMinted[specialCardId] = idHasMinted[specialCardId].add(1);
 		specialSupply = specialSupply.add(1);
 		totalSupply = totalSupply.add(1);	
 		emit mintEvent(msg.sender, specialCardId, 1, totalSupply);
 		specialCardId = specialCardId + 1; 
+		addressHasClaimed[msg.sender] = addressHasClaimed[msg.sender].add(1);
 	}
 
 	// Mint normal card functions
@@ -189,6 +195,7 @@ contract Unname is EIP712, ERC1155{
 	function mintNormal(uint256 quantity, uint256 maxQuantity, bytes memory SIGNATURE) external payable onlySale callerIsUser{
 		if (whitelistSwitch == true) {
 			require(verify(maxQuantity, SIGNATURE), "Not eligible for whitelist.");
+			MAX_ADDRESS_TOKEN = maxQuantity;
 		}
 		if (hasAuctionStarted == true) {
 			require(msg.value >= getDutchAuctionPrice().mul(quantity), "Ether value sent is not enough.");
@@ -197,6 +204,7 @@ contract Unname is EIP712, ERC1155{
 			require(msg.value == PRICE.mul(quantity), "Ether value sent is not equal the price.");
 		}
 		require(quantity > 0 && normalSupply.add(quantity) <= MAX_NORMAL_TOKEN, "Exceeds MAX_NORMAL_TOKEN.");
+		require(addressHasMinted[msg.sender].add(quantity) <= MAX_ADDRESS_TOKEN, "Exeeds quantity.");
 		
 		uint256 randomNum;
 		uint256 tokenId;
@@ -205,21 +213,20 @@ contract Unname is EIP712, ERC1155{
             randomNum = random(seed);
 			tokenId = randomNum + 1;
 
-			while(hasMinted[tokenId].add(1) > quantityLimit[tokenId]) {
+			while(idHasMinted[tokenId].add(1) > quantityLimit[tokenId]) {
 				tokenId = tokenId + 1;
 				if (tokenId > 20) {
 					tokenId = 1;
 				}
-			}
-			console.log(tokenId); //
-			
+			}			
 			_mint(msg.sender, tokenId, 1, "");
 
-			hasMinted[tokenId] = hasMinted[tokenId].add(1);
+			idHasMinted[tokenId] = idHasMinted[tokenId].add(1);
 			normalSupply = normalSupply.add(1);
 			totalSupply = totalSupply.add(1);			
 			emit mintEvent(msg.sender, tokenId, 1, totalSupply);
         }
+		addressHasMinted[msg.sender] = addressHasMinted[msg.sender].add(quantity);
 	}
 
 	// Burn functions
@@ -233,10 +240,12 @@ contract Unname is EIP712, ERC1155{
 
 	// // setting functions
 	// // ------------------------------------------------------------------------
-	function setTokenLimit(uint256 _MAX_NORMAL_TOKEN, uint256 _MAX_SPECIAL_TOKEN, uint256 _SPECIAL_CARD_CONDICTION) external onlyOwner {
+	function setTokenLimit(uint256 _MAX_NORMAL_TOKEN, uint256 _MAX_SPECIAL_TOKEN, uint256 _SPECIAL_CARD_CONDICTION, uint256 _MAX_ADDRESS_TOKEN, uint256 _specialCardId) external onlyOwner {
 		MAX_NORMAL_TOKEN = _MAX_NORMAL_TOKEN;
 		MAX_SPECIAL_TOKEN = _MAX_SPECIAL_TOKEN;
 		SPECIAL_CARD_CONDICTION = _SPECIAL_CARD_CONDICTION;
+		MAX_ADDRESS_TOKEN = _MAX_ADDRESS_TOKEN;
+		specialCardId = _specialCardId;
 	}
 
 	function setIdLimit(uint256 _id, uint256 _MAX) external onlyOwner {

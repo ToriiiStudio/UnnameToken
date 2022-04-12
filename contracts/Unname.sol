@@ -21,7 +21,7 @@ contract Unname is EIP712, ERC1155{
 	uint256 public MAX_NORMAL_TOKEN = 2200;
 	uint256 public MAX_SPECIAL_TOKEN = 22;
 	uint256 public SPECIAL_CARD_CONDICTION = 3; // 
-	uint256 public MAX_ADDRESS_TOKEN = 5; //
+	uint256 public MAX_ADDRESS_TOKEN = 10; //
 	uint256 public PRICE = 0.2 ether; //
 	uint256 public saleTimestamp = 1642410000; //
 	uint256 public totalSupply = 0;
@@ -56,7 +56,7 @@ contract Unname is EIP712, ERC1155{
 	// Constructor
 	// ------------------------------------------------------------------------
 	constructor()
-	ERC1155("https://api.unnametoken.com/Metadata/{id}")
+	ERC1155("http://api.unnametoken.com/Metadata/{id}")
 	EIP712("Unname", "1.0.0")
 	{
 		for (uint index = 1; index < 21; index++){

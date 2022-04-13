@@ -20,19 +20,18 @@ contract Unname is EIP712, ERC1155{
 	
 	uint256 public MAX_NORMAL_TOKEN = 2200;
 	uint256 public MAX_SPECIAL_TOKEN = 22;
-	uint256 public SPECIAL_CARD_CONDICTION = 3; // 
+	uint256 public SPECIAL_CARD_CONDITION = 3; // 
 	uint256 public MAX_ADDRESS_TOKEN = 10; //
 	uint256 public PRICE = 0.2 ether; //
 	uint256 public saleTimestamp = 1642410000; //
-	uint256 public totalSupply = 0;
 	uint256 public normalSupply = 0;
 	uint256 public specialSupply = 0;
 	uint256 public claimStageLimit = 30;
 	uint256 public auctionStageLimit = 2200;
 	uint256 public specialCardId = 21; 
 	
-	bool public hasSaleStarted = true; 
-	bool public hasClaimStarted = true; 
+	bool public hasSaleStarted = false; 
+	bool public hasClaimStarted = false; 
 	bool public hasAuctionStarted = false; 
 	bool public whitelistSwitch = false;
 	bool public burnStarted = false;
@@ -153,15 +152,14 @@ contract Unname is EIP712, ERC1155{
 		} else {
 			normalSupply = normalSupply.add(quantity);
 		}
-		totalSupply = normalSupply + specialSupply;
 		idHasMinted[id] = idHasMinted[id].add(quantity);
 
-		emit mintEvent(to, id, quantity, totalSupply);
+		emit mintEvent(to, id, quantity, totalSupply());
 	}
 
 	// Claim special card functions
 	// ------------------------------------------------------------------------
-	function claimSpecial(uint256 maxQuantity, bytes memory SIGNATURE) external payable callerIsUser{
+	function claimSpecial(uint256 maxQuantity, bytes memory SIGNATURE) external payable{
 		require(hasClaimStarted == true, "Claim has not started.");
 		require(block.timestamp >= saleTimestamp, "NOT_IN_CLAIM_TIME");
 		require(specialCardId <= claimStageLimit, "Exceed the special id of claim at this stage.");
@@ -174,18 +172,17 @@ contract Unname is EIP712, ERC1155{
 			}
 		}
 
-		require(tokenNum >= SPECIAL_CARD_CONDICTION, "Not enough normal card.");
-		require(msg.value == PRICE, "Ether value sent is not equal the price.");
+		require(tokenNum >= SPECIAL_CARD_CONDITION, "Not enough normal card.");
+		require(msg.value >= PRICE, "Ether value sent is not equal to the price.");
 		require(specialSupply.add(1) <= MAX_SPECIAL_TOKEN, "Exceeds MAX_SPECIAL_TOKEN.");
 		require(idHasMinted[specialCardId].add(1) <= quantityLimit[specialCardId], "Exceeds id quantity limit.");
-		require(addressHasClaimed[msg.sender].add(1) <= maxQuantity, "Exeeds claim quantity.");
+		require(addressHasClaimed[msg.sender].add(1) <= maxQuantity, "Exceeds claim quantity.");
 		
 		_mint(msg.sender, specialCardId, 1, "");
 
 		idHasMinted[specialCardId] = idHasMinted[specialCardId].add(1);
 		specialSupply = specialSupply.add(1);
-		totalSupply = totalSupply.add(1);	
-		emit mintEvent(msg.sender, specialCardId, 1, totalSupply);
+		emit mintEvent(msg.sender, specialCardId, 1, totalSupply());
 		specialCardId = specialCardId + 1; 
 		addressHasClaimed[msg.sender] = addressHasClaimed[msg.sender].add(1);
 	}
@@ -201,10 +198,10 @@ contract Unname is EIP712, ERC1155{
 			require(msg.value >= getDutchAuctionPrice().mul(quantity), "Ether value sent is not enough.");
 			require(quantity > 0 && normalSupply.add(quantity) <= auctionStageLimit, "Exceeds MAX_NORMAL_TOKEN.");
 		} else {
-			require(msg.value == PRICE.mul(quantity), "Ether value sent is not equal the price.");
+			require(msg.value >= PRICE.mul(quantity), "Ether value sent is not equal to the price.");
 		}
 		require(quantity > 0 && normalSupply.add(quantity) <= MAX_NORMAL_TOKEN, "Exceeds MAX_NORMAL_TOKEN.");
-		require(addressHasMinted[msg.sender].add(quantity) <= MAX_ADDRESS_TOKEN, "Exeeds quantity.");
+		require(addressHasMinted[msg.sender].add(quantity) <= MAX_ADDRESS_TOKEN, "Exceeds quantity.");
 		
 		uint256 randomNum;
 		uint256 tokenId;
@@ -223,8 +220,7 @@ contract Unname is EIP712, ERC1155{
 
 			idHasMinted[tokenId] = idHasMinted[tokenId].add(1);
 			normalSupply = normalSupply.add(1);
-			totalSupply = totalSupply.add(1);			
-			emit mintEvent(msg.sender, tokenId, 1, totalSupply);
+			emit mintEvent(msg.sender, tokenId, 1, totalSupply());
         }
 		addressHasMinted[msg.sender] = addressHasMinted[msg.sender].add(quantity);
 	}
@@ -238,12 +234,19 @@ contract Unname is EIP712, ERC1155{
         _burn(account, id, quantity);
     }
 
-	// // setting functions
-	// // ------------------------------------------------------------------------
-	function setTokenLimit(uint256 _MAX_NORMAL_TOKEN, uint256 _MAX_SPECIAL_TOKEN, uint256 _SPECIAL_CARD_CONDICTION, uint256 _MAX_ADDRESS_TOKEN, uint256 _specialCardId) external onlyOwner {
+	// TotalSupply functions
+	// ------------------------------------------------------------------------
+	function totalSupply() public view returns (uint256) {
+		return normalSupply + specialSupply;
+	}
+
+
+	// Setting functions
+	// ------------------------------------------------------------------------
+	function setTokenLimit(uint256 _MAX_NORMAL_TOKEN, uint256 _MAX_SPECIAL_TOKEN, uint256 _SPECIAL_CARD_CONDITION, uint256 _MAX_ADDRESS_TOKEN, uint256 _specialCardId) external onlyOwner {
 		MAX_NORMAL_TOKEN = _MAX_NORMAL_TOKEN;
 		MAX_SPECIAL_TOKEN = _MAX_SPECIAL_TOKEN;
-		SPECIAL_CARD_CONDICTION = _SPECIAL_CARD_CONDICTION;
+		SPECIAL_CARD_CONDITION = _SPECIAL_CARD_CONDITION;
 		MAX_ADDRESS_TOKEN = _MAX_ADDRESS_TOKEN;
 		specialCardId = _specialCardId;
 	}
@@ -252,7 +255,7 @@ contract Unname is EIP712, ERC1155{
 		quantityLimit[_id] = _MAX;
 	}
 
-	function set_PRICE(uint256 _price) external onlyOwner {
+	function setPRICE(uint256 _price) external onlyOwner {
 		PRICE = _price;
 	}
 

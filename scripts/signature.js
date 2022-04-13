@@ -8,7 +8,7 @@ var adminClient = new faunadb.Client({
 
 async function main() {
 
-	let nftAddress = "0xe558594520B17CC3dAE30E7d96B7564C809E9562"; //
+	let nftAddress = "0x8d01805A1881BeBA3BC0d682D634f60D87Fd10c0"; //
 	let owner = new ethers.Wallet(process.env.RINKEBY_PRIVATE_KEY); //
 	let serial = 0;
 	let maxQuantity = 3;

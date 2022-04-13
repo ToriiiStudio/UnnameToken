@@ -177,14 +177,15 @@ contract Unname is EIP712, ERC1155{
 		require(specialSupply.add(1) <= MAX_SPECIAL_TOKEN, "Exceeds MAX_SPECIAL_TOKEN.");
 		require(idHasMinted[specialCardId].add(1) <= quantityLimit[specialCardId], "Exceeds id quantity limit.");
 		require(addressHasClaimed[msg.sender].add(1) <= maxQuantity, "Exceeds claim quantity.");
+
+		idHasMinted[specialCardId] = idHasMinted[specialCardId].add(1);
+		addressHasClaimed[msg.sender] = addressHasClaimed[msg.sender].add(1);
 		
 		_mint(msg.sender, specialCardId, 1, "");
 
-		idHasMinted[specialCardId] = idHasMinted[specialCardId].add(1);
 		specialSupply = specialSupply.add(1);
 		emit mintEvent(msg.sender, specialCardId, 1, totalSupply());
 		specialCardId = specialCardId + 1; 
-		addressHasClaimed[msg.sender] = addressHasClaimed[msg.sender].add(1);
 	}
 
 	// Mint normal card functions

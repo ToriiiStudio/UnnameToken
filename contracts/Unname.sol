@@ -1,6 +1,5 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
-import "hardhat/console.sol"; //
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
@@ -15,7 +14,8 @@ contract Unname is EIP712, ERC1155{
 
 	// Variables
 	// ------------------------------------------------------------------------
-	string private _name = "U"; //
+	// string private _name = "PlateForm by Unname Token";
+	string private _name = "P";
 	string private _symbol = "PFUT"; // 
 	
 	uint256 public MAX_NORMAL_TOKEN = 2200;
@@ -38,6 +38,7 @@ contract Unname is EIP712, ERC1155{
 
 	address public owner = 0x5279246E3626Cebe71a4c181382A50a71d2A4156;
 	address public treasury = 0x5279246E3626Cebe71a4c181382A50a71d2A4156;
+	address public signer = 0x5279246E3626Cebe71a4c181382A50a71d2A4156;
 
     // Dutch auction config
     uint256 public auctionStartTimestamp; 
@@ -106,7 +107,7 @@ contract Unname is EIP712, ERC1155{
 	function verify(uint256 maxQuantity, bytes memory SIGNATURE) public view returns (bool){
 		address recoveredAddr = ECDSA.recover(_hashTypedDataV4(keccak256(abi.encode(keccak256("NFT(address addressForClaim,uint256 maxQuantity)"), _msgSender(), maxQuantity))), SIGNATURE);
 
-		return owner == recoveredAddr;
+		return signer == recoveredAddr;
 	}
 
 	// Random functions
@@ -203,9 +204,11 @@ contract Unname is EIP712, ERC1155{
 		}
 		require(quantity > 0 && normalSupply.add(quantity) <= MAX_NORMAL_TOKEN, "Exceeds MAX_NORMAL_TOKEN.");
 		require(addressHasMinted[msg.sender].add(quantity) <= MAX_ADDRESS_TOKEN, "Exceeds quantity.");
-		
+
 		uint256 randomNum;
 		uint256 tokenId;
+		addressHasMinted[msg.sender] = addressHasMinted[msg.sender].add(quantity);
+		
         for (uint index = 0; index < quantity; index++) {
             string memory seed = string(abi.encodePacked(msg.sender, index, block.timestamp));
             randomNum = random(seed);
@@ -216,14 +219,14 @@ contract Unname is EIP712, ERC1155{
 				if (tokenId > 20) {
 					tokenId = 1;
 				}
-			}			
+			}		
+			idHasMinted[tokenId] = idHasMinted[tokenId].add(1);
+
 			_mint(msg.sender, tokenId, 1, "");
 
-			idHasMinted[tokenId] = idHasMinted[tokenId].add(1);
 			normalSupply = normalSupply.add(1);
 			emit mintEvent(msg.sender, tokenId, 1, totalSupply());
         }
-		addressHasMinted[msg.sender] = addressHasMinted[msg.sender].add(quantity);
 	}
 
 	// Burn functions
@@ -275,6 +278,11 @@ contract Unname is EIP712, ERC1155{
 
     function setBurn(bool _burnStarted) external onlyOwner {
         burnStarted = _burnStarted;
+    }
+	
+    function setSigner(address _signer) external onlyOwner {
+        require(_signer != address(0), "SETTING_ZERO_ADDRESS");
+        signer = _signer;
     }
 
     function setSaleSwitch(

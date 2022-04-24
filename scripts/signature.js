@@ -8,11 +8,11 @@ var adminClient = new faunadb.Client({
 
 async function main() {
 
-	let nftAddress = "0x94F8d44764d9b80D9c9cB21AE88e610068A5cc98"; //
-	let owner = new ethers.Wallet(process.env.RINKEBY_PRIVATE_KEY); //
+	let nftAddress = "0x7296334165fC627d9Ed0D432d590b1475c2f3f2F"; //
+	let owner = new ethers.Wallet(process.env.SIGNER_PRIVATE_KEY); //
 	let serial = 0;
-	let maxQuantity = 10;
-	let addressForClaim = ['0xbd42a2035d41b450ee7106c9f9c0c736fb546226'];
+	let maxQuantity = 3;
+	let addressForClaim = ['0x5279246e3626cebe71a4c181382a50a71d2a4156', '0xd56e7bcf62a417b821e6cf7ee16df7715a3e82ab'];
 
 	for (let i = 0; i < addressForClaim.length; i++) {
 		const domain = {
@@ -42,7 +42,7 @@ async function main() {
 		signature = await owner._signTypedData(domain, types, value);
 		console.log(signature);
 
-		var creat = await adminClient.query(q.Create(q.Ref(q.Collection('Whitelist'), serial + i), {
+		var creat = await adminClient.query(q.Create(q.Ref(q.Collection('Claim'), serial + i), {
 			data: {
 				address: addressForClaim[i],
 				maxNum: maxQuantity,

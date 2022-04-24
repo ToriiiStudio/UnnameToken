@@ -10,7 +10,7 @@ const NFT = artifacts.require("Unname");
 async function main() {
 
 
-  let nftAddress = "0x1dC43CBDa2f3743125dD9159A7e56FF81ee64477";//
+  let nftAddress = "0x7296334165fC627d9Ed0D432d590b1475c2f3f2F";//
   let nft = await NFT.at(nftAddress);
 
   await nft.withdrawAll();

@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "operator-filter-registry/src/DefaultOperatorFilterer.sol";
 
-contract Unname is EIP712, ERC1155, DefaultOperatorFilterer{
+contract Unname is EIP712, ERC1155{
 
 	using SafeMath for uint256;
 	using Strings for uint256;
@@ -37,9 +37,9 @@ contract Unname is EIP712, ERC1155, DefaultOperatorFilterer{
 	bool public whitelistSwitch = false;
 	bool public burnStarted = false;
 
-	address public owner = 0x5279246E3626Cebe71a4c181382A50a71d2A4156;
-	address public treasury = 0x5279246E3626Cebe71a4c181382A50a71d2A4156;
-	address public signer = 0x5279246E3626Cebe71a4c181382A50a71d2A4156;
+	address public owner = 0xCf3eD5Eb7850c885AbD6F0170c1fA66ef7c758fF;
+	address public treasury = 0xCf3eD5Eb7850c885AbD6F0170c1fA66ef7c758fF;
+	address public signer = 0xCf3eD5Eb7850c885AbD6F0170c1fA66ef7c758fF;
 
     // Dutch auction config
     uint256 public auctionStartTimestamp; 
@@ -325,44 +325,4 @@ contract Unname is EIP712, ERC1155, DefaultOperatorFilterer{
 	function withdrawAll() public payable onlyOwner {
 		require(payable(treasury).send(address(this).balance));
 	}
-
-    function setApprovalForAll(
-		address operator, 
-		bool approved
-	) 
-		public 
-		override 
-		onlyAllowedOperatorApproval(operator) 
-	{
-        super.setApprovalForAll(operator, approved);
-    }
-
-    function safeTransferFrom(
-		address from, 
-		address to, 
-		uint256 tokenId, 
-		uint256 amount, 
-		bytes memory data
-	)
-        public
-        override
-        onlyAllowedOperator(from)
-    {
-        super.safeTransferFrom(from, to, tokenId, amount, data);
-    }
-
-    function safeBatchTransferFrom(
-        address from,
-        address to,
-        uint256[] memory ids,
-        uint256[] memory amounts,
-        bytes memory data
-    ) 
-		public 
-		virtual 
-		override 
-		onlyAllowedOperator(from) 
-	{
-        super.safeBatchTransferFrom(from, to, ids, amounts, data);
-    }
 }

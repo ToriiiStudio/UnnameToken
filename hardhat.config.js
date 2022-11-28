@@ -32,6 +32,15 @@ module.exports = {
       }
     }
   },
+  solidity: {
+    version: "0.8.13",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200
+      }
+    }
+  },
 
   networks:{
     hardhat: {
@@ -45,6 +54,10 @@ module.exports = {
         "mnemonic": process.env.RINKEBY_TEST_MNEMONIC
       }
     },
+    goerli: {
+      url: process.env.ALCHEMY_API_GOERLI_KEY,
+      accounts: [`0x${process.env.PROJECT_PK_TEST}`],
+    }
     // mainnet: {
     //   url: process.env.ALCHEMY_API_MAINNET_KEY, 
     //   accounts:[process.env.MAINNET_PRIVATE_KEY],

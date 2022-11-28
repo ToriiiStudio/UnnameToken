@@ -13,6 +13,7 @@ module.exports = async ({
   const deployer = accounts[0];
   console.log("");
   console.log("Deployer: ", deployer.address);
+  console.log("Account balance:", (await deployer.getBalance()).toString());
 
   nft = await deploy('Unname', {
     contract: "Unname",

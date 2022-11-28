@@ -1,13 +1,14 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "operator-filter-registry/src/DefaultOperatorFilterer.sol";
 
-contract Unname is EIP712, ERC1155{
+contract Unname is EIP712, ERC1155, DefaultOperatorFilterer{
 
 	using SafeMath for uint256;
 	using Strings for uint256;
@@ -325,4 +326,43 @@ contract Unname is EIP712, ERC1155{
 		require(payable(treasury).send(address(this).balance));
 	}
 
+    function setApprovalForAll(
+		address operator, 
+		bool approved
+	) 
+		public 
+		override 
+		onlyAllowedOperatorApproval(operator) 
+	{
+        super.setApprovalForAll(operator, approved);
+    }
+
+    function safeTransferFrom(
+		address from, 
+		address to, 
+		uint256 tokenId, 
+		uint256 amount, 
+		bytes memory data
+	)
+        public
+        override
+        onlyAllowedOperator(from)
+    {
+        super.safeTransferFrom(from, to, tokenId, amount, data);
+    }
+
+    function safeBatchTransferFrom(
+        address from,
+        address to,
+        uint256[] memory ids,
+        uint256[] memory amounts,
+        bytes memory data
+    ) 
+		public 
+		virtual 
+		override 
+		onlyAllowedOperator(from) 
+	{
+        super.safeBatchTransferFrom(from, to, ids, amounts, data);
+    }
 }
